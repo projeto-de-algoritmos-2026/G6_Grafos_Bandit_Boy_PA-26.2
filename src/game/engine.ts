@@ -657,12 +657,13 @@ export class GameEngine {
     for (const upgrade of this.upgrades) {
       if (this.grid[upgrade.y]?.[upgrade.x] !== CellType.EMPTY) continue;
       const frames = this.sprites.upgrades[upgrade.kind];
-      const scale = upgrade.kind === 'health'
+      const scale = upgrade.kind === 'health' || upgrade.kind === 'shield'
         ? 0.85 + Math.sin(this.lastTime / 180) * 0.1
-        : upgrade.kind === 'shield' ? 0.85 + Math.sin(this.lastTime / 400) * 0.05 : 1;
+        : upgrade.kind === 'ice' ? 1.2 : 1;
       const size = TILE_SIZE * scale;
       const inset = (TILE_SIZE - size) / 2;
-      this.ctx.drawImage(frames[Math.floor(this.lastTime / 150) % frames.length],
+      const frameDuration = upgrade.kind === 'ice' ? 220 : 150;
+      this.ctx.drawImage(frames[Math.floor(this.lastTime / frameDuration) % frames.length],
         upgrade.x * TILE_SIZE + inset, upgrade.y * TILE_SIZE + inset, size, size);
     }
     if (this.showGraphOverlay) {
