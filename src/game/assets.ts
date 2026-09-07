@@ -1,3 +1,13 @@
+import ice1 from '../../assets/ice1.png';
+import ice2 from '../../assets/ice2.png';
+import ice3 from '../../assets/ice3.png';
+import shield from '../../assets/shield.png';
+import fire1 from '../../assets/fire1.png';
+import fire2 from '../../assets/fire2.png';
+import fire3 from '../../assets/fire3.png';
+import boots1 from '../../assets/winged-boot1.png';
+import boots2 from '../../assets/winged-boot2.png';
+import boots3 from '../../assets/winged-boot3.png';
 import banditSprite from '../../assets/Bandit.png';
 import closedSprite from '../../assets/closed.png';
 import openSprite from '../../assets/open.png';
@@ -41,6 +51,7 @@ export const ENEMY_SPRITE_SRCS = [
 
 export function loadGameSprites(): GameSprites {
   return {
+    upgrades: { fire: [fire1, fire2, fire3].map(createImg), boots: [boots1, boots2, boots3].map(createImg), shield: [createImg(shield)], ice: [ice1, ice2, ice3].map(createImg), health: [createImg(healthFullSprite)] },
     exit: createImg(closedSprite),
     exitOpen: createImg(openSprite),
     enemies: ENEMY_SPRITE_SRCS.map(createImg),

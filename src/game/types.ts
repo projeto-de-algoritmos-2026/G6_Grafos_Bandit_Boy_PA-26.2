@@ -64,6 +64,7 @@ export interface GameSprites {
   healthFull: HTMLImageElement;
   healthEmpty: HTMLImageElement;
   explosions: HTMLImageElement[];
+  upgrades: Record<UpgradeKind, HTMLImageElement[]>;
 }
 
 export interface ExploredEdge {
@@ -121,3 +122,7 @@ export interface LevelTransition {
   exitY?: number;
   landingTriggered?: boolean;
 }
+
+export type TimedUpgradeKind = 'fire' | 'boots' | 'shield' | 'ice';
+export type UpgradeKind = TimedUpgradeKind | 'health';
+export interface Upgrade { x: number; y: number; kind: UpgradeKind; }

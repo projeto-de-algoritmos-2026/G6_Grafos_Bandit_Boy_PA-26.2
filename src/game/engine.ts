@@ -26,7 +26,7 @@ import {
   updateParticles,
   updateScorchMarks,
 } from './particles';
-import type { Bomb, Enemy, Explosion, GameOverStats, GameSprites, GraphMetricsStats, LevelTransition, Particle, PathAlgorithm, ScorchMark } from './types';
+import type { Upgrade, TimedUpgradeKind, Bomb, Enemy, Explosion, GameOverStats, GameSprites, GraphMetricsStats, LevelTransition, Particle, PathAlgorithm, ScorchMark } from './types';
 
 export class GameEngine {
   private ctx: CanvasRenderingContext2D;
@@ -61,6 +61,42 @@ export class GameEngine {
   private blocksDestroyedCount = 0;
   private enemiesKilledCount = 0;
 
+  private upgrades: Upgrade[] = [];
+  private upgradeTimers = { fire: 0, boots: 0, shield: 0, ice: 0 };
+  public onUpgradesChange?: (timers: Record<TimedUpgradeKind, number>) => void;
+  private heldDirections = new Map<string, Point>();
+  private moveCooldown = 0;
+  public moveDuration = 0.14;
+
+  private hideUpgrades(): void {
+    const blocks: Point[] = [];
+    this.grid.forEach((row, y) => row.forEach((cell, x) => {
+      if (cell === CellType.BLOCK && (x !== this.exit.x || y !== this.exit.y)) blocks.push({ x, y });
+    }));
+    this.upgrades = [];
+    const count = Math.min(blocks.length, Math.max(5, Math.floor(blocks.length * 0.2)));
+    for (let i = 0; i < count; i++) {
+      const [point] = blocks.splice(Math.floor(Math.random() * blocks.length), 1);
+      this.upgrades.push({ ...point!, kind: (['fire', 'boots', 'shield', 'ice', 'health'] as const)[i % 5] });
+    }
+  }
+
+  private collectUpgrade(): void {
+    this.upgrades = this.upgrades.filter((upgrade) => {
+      if (upgrade.x * TILE_SIZE !== this.x || upgrade.y * TILE_SIZE !== this.y) return true;
+      if (upgrade.kind === 'health') {
+        if (this.health >= this.maxHealth) return true;
+        this.health = Math.min(this.maxHealth, this.health + 1);
+        return false;
+      }
+      this.upgradeTimers[upgrade.kind] = 5;
+      this.onUpgradesChange?.({ ...this.upgradeTimers });
+      return false;
+    });
+  }
+
+  private onKeyUp = (event: KeyboardEvent) => { this.heldDirections.delete(event.code); };
+  private onBlur = () => { this.heldDirections.clear(); };
   private bombs: Bomb[] = [];
   private enemies: Enemy[] = [];
   private explosions: Explosion[] = [];
@@ -81,6 +117,7 @@ export class GameEngine {
     this.grid = generateMap();
     this.enemies = spawnEnemies(this.grid, this.level);
     this.exit = hideExit(this.grid);
+    this.hideUpgrades();
   }
 
   public toggleGraphOverlay(): void {
@@ -145,6 +182,8 @@ export class GameEngine {
 
   start(): void {
     window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.onBlur);
     this.score = 0;
     this.enemiesKilledCount = 0;
     this.startTime = performance.now();
@@ -162,6 +201,8 @@ export class GameEngine {
   destroy(): void {
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.onBlur);
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -188,11 +229,15 @@ export class GameEngine {
 
     if (dx !== 0 || dy !== 0) {
       e.preventDefault();
-      this.move(dx, dy);
+      if (e.repeat) return;
+      this.heldDirections.set(e.code, { x: dx, y: dy });
+      if (this.moveCooldown <= 0) this.move(dx, dy);
     }
   };
 
   private move(dx: number, dy: number): void {
+    this.moveDuration = this.upgradeTimers.boots > 0 ? 0.07 : 0.14;
+    this.moveCooldown = this.moveDuration;
     const nextX = this.x + dx * TILE_SIZE;
     const nextY = this.y + dy * TILE_SIZE;
     const tileX = nextX / TILE_SIZE;
@@ -242,12 +287,13 @@ export class GameEngine {
     this.startY = prevY;
     this.x = nextX;
     this.y = nextY;
-    this.animTimer = 0.14;
+    this.animTimer = this.moveDuration;
     this.lastDx = dx;
     this.lastDy = dy;
     if (dx !== 0) this.facing = dx;
 
     spawnDust(this.particles, prevX + TILE_SIZE / 2, prevY + TILE_SIZE - 4, dx, dy, 4, 20);
+    this.collectUpgrade();
     this.checkEnemyContact();
   }
 
@@ -270,25 +316,22 @@ export class GameEngine {
       { x: 1, y: 0 },
     ];
 
+    const range = this.upgradeTimers.fire > 0 ? 2 : 1;
     for (const d of dirs) {
-      const nx = tx + d.x;
-      const ny = ty + d.y;
-      const cell = this.grid[ny]?.[nx];
-
-      if (cell === CellType.WALL) continue;
-
-      if (cell === CellType.BLOCK) {
-        this.grid[ny][nx] = CellType.EMPTY;
+      for (let distance = 1; distance <= range; distance++) {
+        const nx = tx + d.x * distance;
+        const ny = ty + d.y * distance;
+        const cell = this.grid[ny]?.[nx];
+        if (cell === undefined || cell === CellType.WALL) break;
         tiles.push({ x: nx, y: ny });
-        this.blocksDestroyedCount++;
-        this.score += 50;
-      } else if (cell === CellType.EMPTY) {
-        tiles.push({ x: nx, y: ny });
-      }
-
-      for (const b of this.bombs) {
-        if (b.x === nx * TILE_SIZE && b.y === ny * TILE_SIZE && b.timer > 0.05) {
-          b.timer = 0.05;
+        if (cell === CellType.BLOCK) {
+          this.grid[ny][nx] = CellType.EMPTY;
+          this.blocksDestroyedCount++;
+          this.score += 50;
+          break;
+        }
+        for (const b of this.bombs) {
+          if (b.x === nx * TILE_SIZE && b.y === ny * TILE_SIZE && b.timer > 0.05) b.timer = 0.05;
         }
       }
     }
@@ -304,6 +347,7 @@ export class GameEngine {
 
   private takeDamage(cause = 'Dinamite', killerSprite = BOMB_SPRITE_SRC): void {
     if (!this.isPlaying || this.invulnerableTimer > 0 || this.isGameOver) return;
+    if (cause === 'Dinamite' && this.upgradeTimers.shield > 0) return;
     this.health--;
     if (this.health <= 0) {
       this.health = 0;
@@ -336,6 +380,8 @@ export class GameEngine {
   public resetToMenu(): void {
     this.isGameOver = false;
     this.isPlaying = false;
+    this.upgradeTimers = { fire: 0, boots: 0, shield: 0, ice: 0 };
+    this.onUpgradesChange?.({ ...this.upgradeTimers });
     this.level = 1;
     this.score = 0;
     this.enemiesKilledCount = 0;
@@ -354,6 +400,8 @@ export class GameEngine {
   }
 
   private loadLevel(): void {
+    this.heldDirections.clear();
+    this.moveCooldown = 0;
     this.x = TILE_SIZE;
     this.y = TILE_SIZE;
     this.startX = TILE_SIZE;
@@ -375,6 +423,7 @@ export class GameEngine {
     this.grid = generateMap();
     this.enemies = spawnEnemies(this.grid, this.level);
     this.exit = hideExit(this.grid);
+    this.hideUpgrades();
     this.lastStatsKey = '';
     this.emitGraphStats();
   }
@@ -427,6 +476,10 @@ export class GameEngine {
   };
 
   private update(dt: number): void {
+    if (this.isPlaying && !this.isGameOver) {
+      for (const kind of ['fire', 'boots', 'shield', 'ice'] as const) this.upgradeTimers[kind] = Math.max(0, this.upgradeTimers[kind] - dt);
+      this.onUpgradesChange?.({ ...this.upgradeTimers });
+    }
     if (this.shakeTrauma > 0) {
       this.shakeTrauma = Math.max(0, this.shakeTrauma - dt * 4.0);
     }
@@ -473,6 +526,13 @@ export class GameEngine {
 
     if (this.animTimer > 0) {
       this.animTimer = Math.max(0, this.animTimer - dt);
+    }
+
+    this.moveCooldown = Math.max(0, this.moveCooldown - dt);
+    if (this.isPlaying && !this.isGameOver && this.moveCooldown <= 0) {
+      const directions = [...this.heldDirections.values()];
+      const direction = directions[directions.length - 1];
+      if (direction) this.move(direction.x, direction.y);
     }
 
     for (let i = this.bombs.length - 1; i >= 0; i--) {
@@ -522,7 +582,9 @@ export class GameEngine {
 
     this.removeExplodedEnemies();
     this.checkEnemyContact();
-    updateEnemies(this.enemies, this.grid, this, this.bombs, dt, this.algorithm);
+    if (this.upgradeTimers.ice <= 0) {
+      updateEnemies(this.enemies, this.grid, this, this.bombs, dt, this.algorithm);
+    }
     this.removeExplodedEnemies();
     this.checkEnemyContact();
     this.emitGraphStats();
@@ -592,6 +654,18 @@ export class GameEngine {
 
     renderMap(this.ctx, this.grid, this.sprites, this.level);
     renderScorchMarks(this.ctx, this.scorchMarks);
+    for (const upgrade of this.upgrades) {
+      if (this.grid[upgrade.y]?.[upgrade.x] !== CellType.EMPTY) continue;
+      const frames = this.sprites.upgrades[upgrade.kind];
+      const scale = upgrade.kind === 'health' || upgrade.kind === 'shield'
+        ? 0.85 + Math.sin(this.lastTime / 180) * 0.1
+        : upgrade.kind === 'ice' ? 1.2 : 1;
+      const size = TILE_SIZE * scale;
+      const inset = (TILE_SIZE - size) / 2;
+      const frameDuration = upgrade.kind === 'ice' ? 220 : 150;
+      this.ctx.drawImage(frames[Math.floor(this.lastTime / frameDuration) % frames.length],
+        upgrade.x * TILE_SIZE + inset, upgrade.y * TILE_SIZE + inset, size, size);
+    }
     if (this.showGraphOverlay) {
       renderGraphOverlay(this.ctx, this.grid, this.enemies);
     }
@@ -606,7 +680,7 @@ export class GameEngine {
     renderBombs(this.ctx, this.bombs, this.sprites, this.lastTime);
     renderParticles(this.ctx, this.particles);
     for (const enemy of this.enemies) {
-      renderPlayer(this.ctx, enemy, this.sprites.enemies[enemy.sprite], this.lastTime);
+      renderPlayer(this.ctx, enemy, this.sprites.enemies[enemy.sprite], this.lastTime, this.upgradeTimers.ice > 0);
     }
     renderPlayer(this.ctx, this, this.sprites.bandit, this.lastTime);
 

@@ -259,13 +259,15 @@ export function renderPlayer(
     startX: number;
     startY: number;
     animTimer: number;
+    moveDuration?: number;
     lastDx: number;
     facing: number;
     invulnerableTimer?: number;
     transition?: LevelTransition;
   },
   sprite: HTMLImageElement,
-  time: number
+  time: number,
+  frozen = false
 ): void {
   let renderX = player.x;
   let renderY = player.y;
@@ -348,8 +350,8 @@ export function renderPlayer(
       scaleY = 1;
     }
   } else if (player.animTimer > 0) {
-    const total = 0.14;
-    const hopDuration = 0.085;
+    const total = player.moveDuration ?? 0.14;
+    const hopDuration = total * (0.085 / 0.14);
     const t = 1 - player.animTimer / total;
 
     if (t < hopDuration / total) {
@@ -367,7 +369,7 @@ export function renderPlayer(
       scaleX = 1 + squash * 0.5;
     }
   } else {
-    const breath = Math.sin(time / 350) * 0.03;
+    const breath = frozen ? 0 : Math.sin(time / 350) * 0.03;
     scaleY = 1 + breath;
     scaleX = 1 - breath * 0.4;
   }
@@ -382,6 +384,13 @@ export function renderPlayer(
   ctx.scale(player.facing * scaleX, scaleY);
   ctx.rotate(player.facing * rotation);
   ctx.drawImage(sprite, -TILE_SIZE / 2, -TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  if (frozen) {
+    ctx.fillStyle = 'rgba(125, 211, 252, 0.35)';
+    ctx.fillRect(-TILE_SIZE / 2, -TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-TILE_SIZE / 2 + 1, -TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+  }
   ctx.restore();
 }
 
