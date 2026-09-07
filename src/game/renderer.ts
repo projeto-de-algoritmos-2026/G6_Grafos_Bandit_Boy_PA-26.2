@@ -69,7 +69,7 @@ export function renderHud(
 
   ctx.font = '600 15px "Pixelify Sans", cursive, monospace';
   ctx.fillStyle = '#facc15';
-  ctx.fillText(`PONTOS: ${score}`, 16, 34);
+  ctx.fillText(`MOEDAS: ${score}`, 16, 34);
 
   const hudHue = getLevelHueOffset(level);
   const hudThemeColor = `hsl(${(48 + hudHue) % 360}, 96%, 54%)`;

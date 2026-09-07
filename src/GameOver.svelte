@@ -44,7 +44,7 @@
         <li>
           <div>
             <img src={banditSprite} alt="" />
-            <span>Pontos:</span>
+            <span>Moedas:</span>
           </div>
           <span>{stats.score ?? 0}</span>
         </li>
