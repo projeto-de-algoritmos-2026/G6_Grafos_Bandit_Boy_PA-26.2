@@ -20,11 +20,11 @@ O **Bandit Boy** é uma implementação arcade do clássico Bomberman 2D desenvo
 
 ### Como funciona
 
-- **Modelagem do Grafo ($G = (V, E)$):** A grade do mapa (15 × 13 células) é modelada como um grafo não-direcionado em que cada célula vazia transitável representa um vértice ($V$), e as movimentações ortogonais vizinhas (cima, baixo, esquerda, direita) representam arestas com peso unitário ($w = 1$). Paredes de pedra são obstáculos estáticos e intransponíveis.
+- **Modelagem do Grafo (G = (V, E)):** A grade do mapa (15 × 13 células) é modelada como um grafo não-direcionado em que cada célula vazia transitável representa um vértice (V), e as movimentações ortogonais vizinhas (cima, baixo, esquerda, direita) representam arestas com peso unitário (w = 1). Paredes de pedra são obstáculos estáticos e intransponíveis.
 - **Grafo Dinâmico:** Blocos de tijolos bloqueiam arestas temporariamente. Quando uma dinamite destrói um bloco de tijolo, novas arestas são abertas no grafo em tempo de execução, recalculando instantaneamente as rotas de passagem.
 - **Algoritmos de Menor Caminho:**
-  - **Dijkstra (Fases Ímpares):** Busca de custo uniforme com heurística nula ($h(n) = 0$). O algoritmo expande nós radialmente a partir da origem, cobrindo o labirinto até encontrar o jogador.
-  - **A\* (Fases Pares):** Busca informada guiada pela Heurística Admissível de Manhattan ($f(n) = g(n) + h(n)$). Por ser admissível em grade ortogonal sem diagonais, encontra o caminho ótimo explorando substancialmente menos vértices que a busca uniforme.
+  - **Dijkstra (Fases Ímpares):** Busca de custo uniforme com heurística nula (h(n) = 0). O algoritmo expande nós radialmente a partir da origem, cobrindo o labirinto até encontrar o jogador.
+  - **A\* (Fases Pares):** Busca informada guiada pela Heurística Admissível de Manhattan (f(n) = g(n) + h(n)). Por ser admissível em grade ortogonal sem diagonais, encontra o caminho ótimo explorando substancialmente menos vértices que a busca uniforme.
 - **Modo de Inspeção Visual (`G`):** Pressionando a tecla `G` durante a partida, o jogo exibe diretamente sobre o Canvas os vértices transitáveis, as arestas ativas, os nós visitados pelo algoritmo e a rota traçada para cada slime, além de um painel inferior com métricas em tempo real (algoritmo ativo, quantidade de nós expandidos, tempo de execução da busca em milissegundos e passos da rota).
 - **Mecânicas Arcade:** O jogador deve desviar dos slimes, destruir blocos com bombas, encontrar a saída secreta e eliminar todos os inimigos da arena para abrir a porta para a fase seguinte.
 
@@ -92,7 +92,13 @@ O jogo estará disponível no navegador em: `http://localhost:5173/`
 
 ### Vídeo de Apresentação
 
-- [Vídeo de Apresentação no YouTube](https://youtu.be/)
+<p align="center">
+  <a href="https://youtu.be/Dm7IThr2un4" target="_blank">
+    <img src="https://img.youtube.com/vi/Dm7IThr2un4/maxresdefault.jpg" alt="Vídeo de Apresentação - Bandit Boy" width="720" style="aspect-ratio: 16/9; max-width: 100%; border-radius: 8px;" />
+  </a>
+</p>
+
+- [Vídeo de Apresentação no YouTube](https://youtu.be/Dm7IThr2un4)
 
 ### Comandos Adicionais
 
@@ -119,3 +125,18 @@ npm run deploy
 - **Renderização:** HTML5 Canvas 2D (`imageSmoothingEnabled = false`, escala nativa 3x).
 - **Arte:** Pixel Art própria 16×16 ampliada em 3× (células de 48 × 48 px), sem mixels, acompanhada de partículas para poeira, impactos, faíscas de pavio e explosões.
 - **Transição de Níveis:** Rotação dinâmica de paleta cromática harmônica a cada fase.
+
+## Créditos
+
+- **Desenvolvedores:**
+  - Eduardo Lôbo Moreira (24/1011027)
+  - Hugo Freitas Silva (24/1041302)
+- **Disciplina:** Projeto de Algoritmos (PA 26.2) — Módulo de Grafos (Universidade de Brasília - UnB)
+- **Arte Visual e Gráficos:**
+  - **Porta Secreta, Bombas e Game Over:** Pixel arts de *The Binding of Isaac* adaptadas para 16×16.
+  - **Cenário de Fundo:** Imagem de uso aberto adaptada para 640 × 360.
+  - **Demais Sprites:** Pixel arts autorais criadas pela equipe e elementos de uso aberto.
+- **Áudio e Efeitos Sonoros:**
+  - **Trilha Sonora:** Músicas de *Metal Slug*.
+  - **Efeitos do Herói e Bombas:** Sons de pulo e explosão de bomba de *Roblox*.
+  - **Inimigos:** Efeitos sonoros de slime de *Minecraft*.

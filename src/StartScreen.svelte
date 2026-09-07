@@ -103,18 +103,12 @@
       </button>
     </nav>
 
-    <div class="hint-text">
-      [ ENTER OU ESPAÇO PARA INICIAR ]
-    </div>
+    <div class="hint-text">[ ENTER OU ESPAÇO PARA INICIAR ]</div>
   </div>
 
   {#if activeModal !== null}
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
-    <div
-      class="modal-backdrop"
-      onclick={closeModal}
-      role="presentation"
-    >
+    <div class="modal-backdrop" onclick={closeModal} role="presentation">
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
       <div
         class="modal-window"
@@ -155,11 +149,15 @@
               </div>
               <div class="control-row">
                 <span class="key-combo">EMPURRÃO</span>
-                <span class="key-desc">Ande contra a dinamite para chutá-la</span>
+                <span class="key-desc"
+                  >Ande contra a dinamite para chutá-la</span
+                >
               </div>
               <div class="control-row">
                 <span class="key-combo">G</span>
-                <span class="key-desc">Ativar inspeção visual do Grafo e Busca</span>
+                <span class="key-desc"
+                  >Ativar inspeção visual do Grafo e Busca</span
+                >
               </div>
             </div>
 
@@ -167,18 +165,26 @@
               <div class="section-title">OBJETIVO & DICAS</div>
               <div class="sprite-row">
                 <img src={bombSprite} alt="Bomba" class="pixel-sprite" />
-                <p>O pavio queima por 3 segundos antes de explodir em cruz (+). Fuja do raio de alcance!</p>
+                <p>
+                  O pavio queima por 3 segundos antes de explodir em cruz (+).
+                  Fuja do raio de alcance!
+                </p>
               </div>
               <div class="sprite-row">
                 <img src={brickSprite} alt="Tijolos" class="pixel-sprite" />
-                <p>Destrua blocos de tijolo para abrir novas passagens no tabuleiro.</p>
+                <p>
+                  Destrua blocos de tijolo para abrir novas passagens no
+                  tabuleiro.
+                </p>
               </div>
               <div class="sprite-row">
                 <img src={banditSprite} alt="Bandit" class="pixel-sprite" />
-                <p>Você possui 3 corações de vida. Sobreviva o máximo de tempo possível!</p>
+                <p>
+                  Você possui 3 corações de vida. Sobreviva o máximo de tempo
+                  possível!
+                </p>
               </div>
             </div>
-
           {:else if activeModal === "algorithms"}
             <div class="info-section">
               <div class="section-title">MODELAGEM DO GRAFO G = (V, E)</div>
@@ -186,34 +192,58 @@
                 O tabuleiro 15x13 é modelado como um Grafo Não-Direcionado:
               </p>
               <ul class="pixel-list">
-                <li><strong>Vértices (V):</strong> Cada célula livre transitável do mapa.</li>
-                <li><strong>Arestas (E):</strong> Conexões ortogonais livres (cima, baixo, esquerda, direita) com custo unitário w = 1.</li>
-                <li>Paredes de pedra são obstáculos estáticos e intransponíveis.</li>
+                <li>
+                  <strong>Vértices (V):</strong> Cada célula livre transitável do
+                  mapa.
+                </li>
+                <li>
+                  <strong>Arestas (E):</strong> Conexões ortogonais livres (cima,
+                  baixo, esquerda, direita) com custo unitário w = 1.
+                </li>
+                <li>
+                  Paredes de pedra são obstáculos estáticos e intransponíveis.
+                </li>
               </ul>
             </div>
 
             <div class="info-section">
               <div class="section-title">DINÂMICA EM TEMPO REAL</div>
               <p class="section-text">
-                Tijolos bloqueiam arestas temporariamente. Quando uma dinamite destrói um tijolo, novas arestas são inseridas no grafo em tempo de execução, recalculando as rotas.
+                Tijolos bloqueiam arestas temporariamente. Quando uma dinamite
+                destrói um tijolo, novas arestas são inseridas no grafo em tempo
+                de execução, recalculando as rotas.
               </p>
             </div>
 
             <div class="info-section">
               <div class="section-title">DIJKSTRA vs A* (MENOR CAMINHO)</div>
               <p class="section-text">
-                O jogo implementa os dois algoritmos clássicos de menor caminho em grafos, alternando entre as fases:
+                O jogo implementa os dois algoritmos clássicos de menor caminho
+                em grafos, alternando entre as fases:
               </p>
               <ul class="pixel-list">
-                <li><strong>Dijkstra (Fases Ímpares):</strong> Busca uniforme avaliando <code>f(n) = g(n)</code> (heurística nula <code>h=0</code>). Expande nós radialmente em todas as direções até alcançar o alvo.</li>
-                <li><strong>A* (Fases Pares):</strong> Busca informada avaliando <code>f(n) = g(n) + h(n)</code> com a Heurística de Manhattan <code>|x₁ - x₂| + |y₁ - y₂|</code>, reduzindo os nós explorados mantendo a rota mínima.</li>
-                <li><strong>Inspeção Visual [G]:</strong> Pressione <code>G</code> para ver o grafo, nós expandidos e tempo de busca.</li>
+                <li>
+                  <strong>Dijkstra (Fases Ímpares):</strong> Busca uniforme
+                  avaliando <code>f(n) = g(n)</code> (heurística nula
+                  <code>h=0</code>). Expande nós radialmente em todas as
+                  direções até alcançar o alvo.
+                </li>
+                <li>
+                  <strong>A* (Fases Pares):</strong> Busca informada avaliando
+                  <code>f(n) = g(n) + h(n)</code>
+                  com a Heurística de Manhattan
+                  <code>|x₁ - x₂| + |y₁ - y₂|</code>, reduzindo os nós
+                  explorados mantendo a rota mínima.
+                </li>
+                <li>
+                  <strong>Inspeção Visual [G]:</strong> Pressione <code>G</code>
+                  para ver o grafo, nós expandidos e tempo de busca.
+                </li>
               </ul>
               <div class="complexity-box">
                 COMPLEXIDADE: O((|V| + |E|) log |V|) TEMPO | O(|V|) ESPAÇO
               </div>
             </div>
-
           {:else if activeModal === "credits"}
             <div class="info-section">
               <div class="section-title">DESENVOLVEDORES</div>
@@ -243,6 +273,42 @@
                 <br />
                 Pixel Art 16x16 (Escala 3x)
               </p>
+            </div>
+
+            <div class="info-section">
+              <div class="section-title">ARTE & SPRITES</div>
+              <div class="credit-row">
+                <span class="author-name"
+                  >Porta Secreta, Bombas e Game Over</span
+                >
+                <span class="author-id"
+                  >The Binding of Isaac Adaptadas para 16x16</span
+                >
+              </div>
+              <div class="credit-row">
+                <span class="author-name">Cenário de Fundo</span>
+                <span class="author-id">Uso Aberto Adaptado para 640x360</span>
+              </div>
+              <div class="credit-row">
+                <span class="author-name">Demais Sprites</span>
+                <span class="author-id">Próprios & Uso Aberto de 16x16</span>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <div class="section-title">ÁUDIO & EFEITOS SONOROS</div>
+              <div class="credit-row">
+                <span class="author-name">Trilha Sonora</span>
+                <span class="author-id">Metal Slug</span>
+              </div>
+              <div class="credit-row">
+                <span class="author-name">Pulo e Dinamite</span>
+                <span class="author-id">Roblox</span>
+              </div>
+              <div class="credit-row">
+                <span class="author-name">Inimigos (Slimes)</span>
+                <span class="author-id">Minecraft</span>
+              </div>
             </div>
           {/if}
         </div>
