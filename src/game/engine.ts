@@ -26,7 +26,7 @@ import {
   updateParticles,
   updateScorchMarks,
 } from './particles';
-import type { Upgrade, UpgradeKind, Bomb, Enemy, Explosion, GameOverStats, GameSprites, GraphMetricsStats, LevelTransition, Particle, PathAlgorithm, ScorchMark } from './types';
+import type { Upgrade, TimedUpgradeKind, Bomb, Enemy, Explosion, GameOverStats, GameSprites, GraphMetricsStats, LevelTransition, Particle, PathAlgorithm, ScorchMark } from './types';
 
 export class GameEngine {
   private ctx: CanvasRenderingContext2D;
@@ -62,8 +62,8 @@ export class GameEngine {
   private enemiesKilledCount = 0;
 
   private upgrades: Upgrade[] = [];
-  private upgradeTimers = { fire: 0, boots: 0, shield: 0 };
-  public onUpgradesChange?: (timers: Record<UpgradeKind, number>) => void;
+  private upgradeTimers = { fire: 0, boots: 0, shield: 0, ice: 0 };
+  public onUpgradesChange?: (timers: Record<TimedUpgradeKind, number>) => void;
   private heldDirections = new Map<string, Point>();
   private moveCooldown = 0;
   public moveDuration = 0.14;
@@ -74,16 +74,21 @@ export class GameEngine {
       if (cell === CellType.BLOCK && (x !== this.exit.x || y !== this.exit.y)) blocks.push({ x, y });
     }));
     this.upgrades = [];
-    const count = Math.min(blocks.length, Math.max(3, Math.floor(blocks.length * 0.2)));
+    const count = Math.min(blocks.length, Math.max(5, Math.floor(blocks.length * 0.2)));
     for (let i = 0; i < count; i++) {
       const [point] = blocks.splice(Math.floor(Math.random() * blocks.length), 1);
-      this.upgrades.push({ ...point!, kind: (['fire', 'boots', 'shield'] as const)[i % 3] });
+      this.upgrades.push({ ...point!, kind: (['fire', 'boots', 'shield', 'ice', 'health'] as const)[i % 5] });
     }
   }
 
   private collectUpgrade(): void {
     this.upgrades = this.upgrades.filter((upgrade) => {
       if (upgrade.x * TILE_SIZE !== this.x || upgrade.y * TILE_SIZE !== this.y) return true;
+      if (upgrade.kind === 'health') {
+        if (this.health >= this.maxHealth) return true;
+        this.health = Math.min(this.maxHealth, this.health + 1);
+        return false;
+      }
       this.upgradeTimers[upgrade.kind] = 5;
       this.onUpgradesChange?.({ ...this.upgradeTimers });
       return false;
@@ -375,7 +380,7 @@ export class GameEngine {
   public resetToMenu(): void {
     this.isGameOver = false;
     this.isPlaying = false;
-    this.upgradeTimers = { fire: 0, boots: 0, shield: 0 };
+    this.upgradeTimers = { fire: 0, boots: 0, shield: 0, ice: 0 };
     this.onUpgradesChange?.({ ...this.upgradeTimers });
     this.level = 1;
     this.score = 0;
@@ -472,7 +477,7 @@ export class GameEngine {
 
   private update(dt: number): void {
     if (this.isPlaying && !this.isGameOver) {
-      for (const kind of ['fire', 'boots', 'shield'] as const) this.upgradeTimers[kind] = Math.max(0, this.upgradeTimers[kind] - dt);
+      for (const kind of ['fire', 'boots', 'shield', 'ice'] as const) this.upgradeTimers[kind] = Math.max(0, this.upgradeTimers[kind] - dt);
       this.onUpgradesChange?.({ ...this.upgradeTimers });
     }
     if (this.shakeTrauma > 0) {
@@ -577,7 +582,9 @@ export class GameEngine {
 
     this.removeExplodedEnemies();
     this.checkEnemyContact();
-    updateEnemies(this.enemies, this.grid, this, this.bombs, dt, this.algorithm);
+    if (this.upgradeTimers.ice <= 0) {
+      updateEnemies(this.enemies, this.grid, this, this.bombs, dt, this.algorithm);
+    }
     this.removeExplodedEnemies();
     this.checkEnemyContact();
     this.emitGraphStats();
@@ -650,7 +657,9 @@ export class GameEngine {
     for (const upgrade of this.upgrades) {
       if (this.grid[upgrade.y]?.[upgrade.x] !== CellType.EMPTY) continue;
       const frames = this.sprites.upgrades[upgrade.kind];
-      const scale = upgrade.kind === 'shield' ? 0.85 + Math.sin(this.lastTime / 400) * 0.05 : 1;
+      const scale = upgrade.kind === 'health'
+        ? 0.85 + Math.sin(this.lastTime / 180) * 0.1
+        : upgrade.kind === 'shield' ? 0.85 + Math.sin(this.lastTime / 400) * 0.05 : 1;
       const size = TILE_SIZE * scale;
       const inset = (TILE_SIZE - size) / 2;
       this.ctx.drawImage(frames[Math.floor(this.lastTime / 150) % frames.length],
@@ -670,7 +679,7 @@ export class GameEngine {
     renderBombs(this.ctx, this.bombs, this.sprites, this.lastTime);
     renderParticles(this.ctx, this.particles);
     for (const enemy of this.enemies) {
-      renderPlayer(this.ctx, enemy, this.sprites.enemies[enemy.sprite], this.lastTime);
+      renderPlayer(this.ctx, enemy, this.sprites.enemies[enemy.sprite], this.lastTime, this.upgradeTimers.ice > 0);
     }
     renderPlayer(this.ctx, this, this.sprites.bandit, this.lastTime);
 

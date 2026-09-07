@@ -9,7 +9,8 @@
   import fireIcon from '../assets/fire1.png';
   import bootsIcon from '../assets/winged-boot1.png';
   import shieldIcon from '../assets/shield.png';
-  let upgrades = $state({ fire: 0, boots: 0, shield: 0 });
+  import iceIcon from '../assets/ice1.png';
+  let upgrades = $state({ fire: 0, boots: 0, shield: 0, ice: 0 });
 
   type GameState = "menu" | "starting" | "playing" | "gameover";
 
@@ -71,7 +72,7 @@
 
     {#if gameState === "playing"}
       <aside class="upgrades" aria-label="Upgrades ativos">
-        {#each [{ kind: 'fire' as const, icon: fireIcon, label: 'Fogo' }, { kind: 'boots' as const, icon: bootsIcon, label: 'Botas aladas' }, { kind: 'shield' as const, icon: shieldIcon, label: 'Proteção contra bombas' }] as upgrade}
+        {#each [{ kind: 'fire' as const, icon: fireIcon, label: 'Fogo' }, { kind: 'boots' as const, icon: bootsIcon, label: 'Botas aladas' }, { kind: 'shield' as const, icon: shieldIcon, label: 'Proteção contra bombas' }, { kind: 'ice' as const, icon: iceIcon, label: 'Inimigos congelados' }] as upgrade}
           {#if upgrades[upgrade.kind] > 0}
             <div class="upgrade" title={upgrade.label}>
               <img src={upgrade.icon} alt={upgrade.label} />
