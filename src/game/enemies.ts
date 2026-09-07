@@ -190,7 +190,8 @@ export function updateEnemies(
   player: Point,
   bombs: Bomb[],
   dt: number,
-  algorithm: PathAlgorithm = 'astar'
+  algorithm: PathAlgorithm = 'astar',
+  onEnemyStep?: (enemy: Enemy) => void
 ): void {
   const bombTiles = bombs.map((b) => tileKey({ x: b.x / TILE_SIZE, y: b.y / TILE_SIZE }));
   for (const enemy of enemies) {
@@ -233,26 +234,6 @@ export function updateEnemies(
     enemy.lastDx = next.x - start.x;
     if (enemy.lastDx !== 0) enemy.facing = enemy.lastDx;
     enemy.animTimer = 0.14;
-  }
-}
-
-export function recalculatePaths(
-  enemies: Enemy[],
-  grid: Grid,
-  player: Point,
-  bombs: Bomb[],
-  algorithm: PathAlgorithm
-): void {
-  const bombTiles = bombs.map((b) => tileKey({ x: b.x / TILE_SIZE, y: b.y / TILE_SIZE }));
-  for (const enemy of enemies) {
-    if (enemy.mode !== 'chase') continue;
-    const blocked = new Set(bombTiles);
-    for (const other of enemies) {
-      if (other !== enemy) blocked.add(tileKey({ x: other.x / TILE_SIZE, y: other.y / TILE_SIZE }));
-    }
-    const best = findChaseRoute(enemy, grid, player, blocked, algorithm);
-    if (best) {
-      applyEnemyPath(enemy, best);
-    }
+    onEnemyStep?.(enemy);
   }
 }

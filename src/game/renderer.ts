@@ -1,5 +1,5 @@
-import { CellType, HUD_HEIGHT, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, getLevelHueOffset, type Grid, type Point } from './constants';
-import type { Bomb, Enemy, Explosion, GameSprites, LevelTransition, PathAlgorithm } from './types';
+import { CellType, HUD_HEIGHT, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, getLevelHueOffset, BOMB_FUSE_SECONDS, type Grid, type Point } from './constants';
+import type { Bomb, Enemy, Explosion, GameSprites, LevelTransition } from './types';
 
 interface TintedTileCache {
   grass: CanvasImageSource;
@@ -53,8 +53,7 @@ export function renderHud(
   enemyCount: number,
   exitRevealed: boolean,
   score: number = 0,
-  showGraphOverlay: boolean = false,
-  algorithm: PathAlgorithm = 'dijkstra'
+  showGraphOverlay: boolean = false
 ): void {
   const heartSize = TILE_SIZE;
   const startX = Math.round((canvasWidth - maxHealth * heartSize) / 2);
@@ -168,9 +167,9 @@ export function renderBombs(
   time: number
 ): void {
   for (const bomb of bombs) {
-    const urgency = 1 - Math.max(0, bomb.timer / 3.0);
+    const urgency = 1 - Math.max(0, bomb.timer / BOMB_FUSE_SECONDS);
     const interval = 0.8 - urgency * 0.5;
-    const cycleTime = (3.0 - bomb.timer) % interval;
+    const cycleTime = (BOMB_FUSE_SECONDS - bomb.timer) % interval;
     const isHeartbeat = cycleTime < 0.08;
     const pulseScale = isHeartbeat ? 1 + Math.sin((cycleTime / 0.08) * Math.PI) * 0.04 : 1.0;
     const swell = bomb.timer < 0.5 ? ((0.5 - bomb.timer) / 0.5) * 0.12 : 0;

@@ -1,7 +1,7 @@
-import { CellType, getLevelHueOffset, HUD_HEIGHT, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, type Grid, type Point } from './constants';
+import { CellType, getLevelHueOffset, HUD_HEIGHT, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, BOMB_FUSE_SECONDS, type Grid, type Point } from './constants';
 import { generateMap } from './map';
 import { canLeaveLevel, hideExit, isExitRevealed } from './level';
-import { isInExplosion, recalculatePaths, spawnEnemies, updateEnemies } from './enemies';
+import { isInExplosion, spawnEnemies, updateEnemies } from './enemies';
 import { loadGameSprites, BOMB_SPRITE_SRC, ENEMY_SPRITE_SRCS } from './assets';
 import {
   renderBombs,
@@ -27,6 +27,7 @@ import {
   updateScorchMarks,
 } from './particles';
 import type { Upgrade, TimedUpgradeKind, Bomb, Enemy, Explosion, GameOverStats, GameSprites, GraphMetricsStats, LevelTransition, Particle, PathAlgorithm, ScorchMark } from './types';
+import { SoundtrackManager, SfxManager } from './audio';
 
 export class GameEngine {
   private ctx: CanvasRenderingContext2D;
@@ -51,6 +52,9 @@ export class GameEngine {
   public onGameOver?: (stats: GameOverStats) => void;
   public onLevelChange?: (level: number) => void;
   public onGraphStatsUpdate?: (stats: GraphMetricsStats) => void;
+  public onMuteChange?: (muted: boolean) => void;
+  private sfx = new SfxManager();
+  private soundtrack = new SoundtrackManager();
   public isGameOver = false;
   public isPlaying = false;
   public showGraphOverlay = false;
@@ -67,6 +71,54 @@ export class GameEngine {
   private heldDirections = new Map<string, Point>();
   private moveCooldown = 0;
   public moveDuration = 0.14;
+
+  public toggleMute(): boolean {
+    const muted = this.soundtrack.toggleMute();
+    this.sfx.setMuted(muted);
+    this.onMuteChange?.(muted);
+    return muted;
+  }
+
+  public setMuted(muted: boolean): void {
+    this.soundtrack.setMuted(muted);
+    this.sfx.setMuted(muted);
+    this.onMuteChange?.(muted);
+  }
+
+  public isMuted(): boolean {
+    return this.soundtrack.getMuted();
+  }
+
+  public unlockAudio(): void {
+    this.soundtrack.unlockAudio();
+    this.sfx.unlockAudio();
+  }
+
+  public getMusicVolume(): number {
+    return this.soundtrack.getVolume();
+  }
+
+  public setMusicVolume(vol: number): void {
+    this.soundtrack.setVolume(vol);
+  }
+
+  public getSfxVolume(): number {
+    return this.sfx.getVolume();
+  }
+
+  public setSfxVolume(vol: number): void {
+    this.sfx.setVolume(vol);
+  }
+
+  private previewCounter = 0;
+  public playSfxPreview(): void {
+    this.previewCounter++;
+    if (this.previewCounter % 2 === 0) {
+      this.sfx.playSlimeJump();
+    } else {
+      this.sfx.playHeroJump();
+    }
+  }
 
   private hideUpgrades(): void {
     const blocks: Point[] = [];
@@ -113,6 +165,7 @@ export class GameEngine {
     this.canvas.height = MAP_HEIGHT * TILE_SIZE + HUD_HEIGHT;
     this.ctx.imageSmoothingEnabled = false;
 
+    this.soundtrack.setSfxManager(this.sfx);
     this.sprites = loadGameSprites();
     this.grid = generateMap();
     this.enemies = spawnEnemies(this.grid, this.level);
@@ -189,6 +242,7 @@ export class GameEngine {
     this.startTime = performance.now();
     this.lastTime = performance.now();
     this.onLevelChange?.(this.level);
+    this.soundtrack.startMenu();
     this.rafId = requestAnimationFrame(this.tick);
   }
 
@@ -196,6 +250,7 @@ export class GameEngine {
     this.isPlaying = true;
     this.isGameOver = false;
     this.startTime = performance.now();
+    this.soundtrack.startPhase(1.2);
   }
 
   destroy(): void {
@@ -203,9 +258,17 @@ export class GameEngine {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onBlur);
+    this.soundtrack.destroy();
+    this.sfx.destroy();
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
+    if (e.code === 'KeyM') {
+      e.preventDefault();
+      this.toggleMute();
+      return;
+    }
+
     if (!this.isPlaying || this.isGameOver || this.transition.phase !== 'none') return;
 
     if (e.code === 'KeyG') {
@@ -293,6 +356,7 @@ export class GameEngine {
     if (dx !== 0) this.facing = dx;
 
     spawnDust(this.particles, prevX + TILE_SIZE / 2, prevY + TILE_SIZE - 4, dx, dy, 4, 20);
+    this.sfx.playHeroJump();
     this.collectUpgrade();
     this.checkEnemyContact();
   }
@@ -300,11 +364,13 @@ export class GameEngine {
   private spawnBomb(): void {
     if (this.isGameOver) return;
     if (this.bombs.some((b) => b.x === this.x && b.y === this.y)) return;
-    this.bombs.push({ x: this.x, y: this.y, timer: 3.0 });
+    const soundId = this.sfx.playBombArming();
+    this.bombs.push({ x: this.x, y: this.y, timer: BOMB_FUSE_SECONDS, soundId });
     this.bombsPlacedCount++;
   }
 
   private explodeBomb(bomb: Bomb): void {
+    this.sfx.detonateBomb(bomb.soundId);
     const tx = Math.round(bomb.x / TILE_SIZE);
     const ty = Math.round(bomb.y / TILE_SIZE);
     const tiles: Point[] = [{ x: tx, y: ty }];
@@ -352,6 +418,8 @@ export class GameEngine {
     if (this.health <= 0) {
       this.health = 0;
       this.isGameOver = true;
+      this.soundtrack.onGameOver(0.8);
+      this.sfx.stopAllBombSounds();
       const elapsedSec = Math.floor((performance.now() - this.startTime) / 1000);
       const mins = Math.floor(elapsedSec / 60);
       const secs = elapsedSec % 60;
@@ -380,6 +448,8 @@ export class GameEngine {
   public resetToMenu(): void {
     this.isGameOver = false;
     this.isPlaying = false;
+    this.soundtrack.startMenu();
+    this.sfx.stopAllBombSounds();
     this.upgradeTimers = { fire: 0, boots: 0, shield: 0, ice: 0 };
     this.onUpgradesChange?.({ ...this.upgradeTimers });
     this.level = 1;
@@ -567,7 +637,7 @@ export class GameEngine {
         }
       }
 
-      const urgency = 1 - Math.max(0, bomb.timer / 3.0);
+      const urgency = 1 - Math.max(0, bomb.timer / BOMB_FUSE_SECONDS);
       if (Math.random() < 0.25 + urgency * 0.45) {
         const curX = bomb.slideTimer && bomb.slideTimer > 0 ? (bomb.renderX ?? bomb.x) : bomb.x;
         const curY = bomb.slideTimer && bomb.slideTimer > 0 ? (bomb.renderY ?? bomb.y) : bomb.y;
@@ -583,7 +653,18 @@ export class GameEngine {
     this.removeExplodedEnemies();
     this.checkEnemyContact();
     if (this.upgradeTimers.ice <= 0) {
-      updateEnemies(this.enemies, this.grid, this, this.bombs, dt, this.algorithm);
+      updateEnemies(
+        this.enemies,
+        this.grid,
+        this,
+        this.bombs,
+        dt,
+        this.algorithm,
+        (enemy) => {
+          const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y) / TILE_SIZE;
+          this.sfx.playSlimeJump(dist);
+        }
+      );
     }
     this.removeExplodedEnemies();
     this.checkEnemyContact();
@@ -627,6 +708,8 @@ export class GameEngine {
       exitX: this.exit.x * TILE_SIZE,
       exitY: this.exit.y * TILE_SIZE,
     };
+    this.soundtrack.endPhase(duration);
+    this.sfx.stopAllBombSounds();
   }
 
   public startEnterTransition(): void {
@@ -637,13 +720,14 @@ export class GameEngine {
       duration,
       landingTriggered: false,
     };
+    this.soundtrack.startPhase(1.2);
   }
 
   private render(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     renderHud(this.ctx, this.sprites, this.health, this.maxHealth, this.canvas.width,
-      this.level, this.enemies.length, isExitRevealed(this.grid, this.exit), this.score, this.showGraphOverlay, this.algorithm);
+      this.level, this.enemies.length, isExitRevealed(this.grid, this.exit), this.score, this.showGraphOverlay);
 
     const shake = Math.pow(this.shakeTrauma, 2) * 5;
     const shakeX = (Math.random() * 2 - 1) * shake;

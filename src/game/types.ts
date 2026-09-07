@@ -15,6 +15,7 @@ export interface Bomb {
   resistTimer?: number;
   resistDx?: number;
   resistDy?: number;
+  soundId?: number;
 }
 
 export interface Explosion {
