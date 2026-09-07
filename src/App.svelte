@@ -167,7 +167,6 @@
       onPlay={handlePlayStart}
       onComplete={handlePlayComplete}
       isExiting={gameState === "starting"}
-      onOpenAudio={openAudioModal}
     />
   {:else if gameState === "gameover" && gameOverStats}
     <GameOver stats={gameOverStats} onRestart={handleRestart} />

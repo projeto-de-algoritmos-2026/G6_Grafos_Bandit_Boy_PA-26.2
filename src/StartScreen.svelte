@@ -8,12 +8,10 @@
     onPlay,
     onComplete,
     isExiting = false,
-    onOpenAudio,
   }: {
     onPlay: () => void;
     onComplete: () => void;
     isExiting?: boolean;
-    onOpenAudio?: () => void;
   } = $props();
 
   type ModalType = null | "howToPlay" | "algorithms" | "credits";
@@ -96,15 +94,6 @@
       >
         ALGORITMOS
       </button>
-      {#if onOpenAudio}
-        <button
-          type="button"
-          class="pixel-btn"
-          onclick={onOpenAudio}
-        >
-          ÁUDIO
-        </button>
-      {/if}
       <button
         type="button"
         class="pixel-btn"
