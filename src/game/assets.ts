@@ -1,3 +1,4 @@
+import shield from '../../assets/shield.png';
 import fire1 from '../../assets/fire1.png';
 import fire2 from '../../assets/fire2.png';
 import fire3 from '../../assets/fire3.png';
@@ -47,7 +48,7 @@ export const ENEMY_SPRITE_SRCS = [
 
 export function loadGameSprites(): GameSprites {
   return {
-    upgrades: { fire: [fire1, fire2, fire3].map(createImg), boots: [boots1, boots2, boots3].map(createImg) },
+    upgrades: { fire: [fire1, fire2, fire3].map(createImg), boots: [boots1, boots2, boots3].map(createImg), shield: [createImg(shield)] },
     exit: createImg(closedSprite),
     exitOpen: createImg(openSprite),
     enemies: ENEMY_SPRITE_SRCS.map(createImg),
