@@ -43,6 +43,13 @@
     }
 
     if (e.code === "Enter" || e.code === "Space") {
+      if (
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== document.body &&
+        document.activeElement.tagName !== "BODY"
+      ) {
+        return;
+      }
       e.preventDefault();
       handlePlayClick();
     }
@@ -101,6 +108,15 @@
       >
         CRÉDITOS
       </button>
+      <a
+        href="https://youtu.be/Dm7IThr2un4"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="pixel-btn"
+        role="button"
+      >
+        APRESENTAÇÃO
+      </a>
     </nav>
 
     <div class="hint-text">[ ENTER OU ESPAÇO PARA INICIAR ]</div>
@@ -380,7 +396,7 @@
   .logo-wrapper {
     display: flex;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: 54px;
     filter: drop-shadow(0 9px 0 rgba(0, 0, 0, 0.75));
   }
 
@@ -423,11 +439,17 @@
     align-items: center;
     image-rendering: pixelated;
     transition: none;
+    text-decoration: none;
+  }
+
+  .pixel-btn:visited {
+    color: #fce8c8;
   }
 
   .pixel-btn:hover {
     background: #422818;
     color: #ffffff;
+    text-decoration: none;
     box-shadow:
       inset 3px 3px 0 #73452b,
       inset -3px -3px 0 #1c0f09,

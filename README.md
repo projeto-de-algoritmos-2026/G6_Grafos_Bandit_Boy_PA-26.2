@@ -2,6 +2,16 @@
   <img src="./assets/Logo.png" alt="Bandit Boy - Bomberman 2D" width="380" />
 </p>
 
+<p align="center">
+  <a href="https://projeto-de-algoritmos-2026.github.io/G6_Grafos_PA-26.2/" target="_blank">
+    <img src="https://img.shields.io/badge/JOGAR%20AGORA-2563eb?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMS41OCAxNi4wOWwtMS4wOS03LjY2QzIwLjIxIDYuNDYgMTguNTIgNSAxNi41MyA1SDcuNDdDNS40OCA1IDMuNzkgNi40NiAzLjUxIDguNDNsLTEuMDkgNy42NkMyLjIgMTcuNjMgMy4zOSAxOSA0Ljk0IDE5Yy42OSAwIDEuMzItLjI4IDEuNzctLjc0TDkgMTZoNmwyLjI5IDIuMjZjLjQ1LjQ2IDEuMDguNzQgMS43Ny43NCAxLjU1IDAgMi43NC0xLjM3IDIuNTItMi45MXpNMTEgMTFIOXYySDh2LTJINnYtMWgyVjhoMXYyaDJ2MXptNC0xYy0uNTUgMC0xLS40NS0xLTFzLjQ1LTEgMS0xIDEgLjQ1IDEgMS0uNDUgMS0xIDF6bTIgM2MtLjU1IDAtMS0uNDUtMS0xcy40NS0xIDEtMSAxIC40NSAxIDEtLjQ1IDEtMSAxeiIvPjwvc3ZnPg==" alt="Jogar Agora" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://youtu.be/Dm7IThr2un4" target="_blank">
+    <img src="https://img.shields.io/badge/ASSISTIR%20APRESENTA%C3%87%C3%83O-c4302b?style=for-the-badge&logo=youtube&logoColor=white" alt="Vídeo de Apresentação" />
+  </a>
+</p>
+
 # Bandit Boy - Grupo 6
 
 Número da Lista: 1<br>
@@ -22,7 +32,7 @@ O **Bandit Boy** é uma implementação arcade do clássico Bomberman 2D desenvo
 
 - **Modelagem do Grafo (G = (V, E)):** A grade do mapa (15 × 13 células) é modelada como um grafo não-direcionado em que cada célula vazia transitável representa um vértice (V), e as movimentações ortogonais vizinhas (cima, baixo, esquerda, direita) representam arestas com peso unitário (w = 1). Paredes de pedra são obstáculos estáticos e intransponíveis.
 - **Grafo Dinâmico:** Blocos de tijolos bloqueiam arestas temporariamente. Quando uma dinamite destrói um bloco de tijolo, novas arestas são abertas no grafo em tempo de execução, recalculando instantaneamente as rotas de passagem.
-- **Algoritmos de Menor Caminho:**
+- **Algoritmos de Menor Caminho:** Toda a lógica dos algoritmos de menor caminho e busca em grafos está implementada no arquivo [`src/game/pathfinding.ts`](https://github.com/projeto-de-algoritmos-2026/G6_Grafos_PA-26.2/blob/main/src/game/pathfinding.ts):
   - **Dijkstra (Fases Ímpares):** Busca de custo uniforme com heurística nula (h(n) = 0). O algoritmo expande nós radialmente a partir da origem, cobrindo o labirinto até encontrar o jogador.
   - **A\* (Fases Pares):** Busca informada guiada pela Heurística Admissível de Manhattan (f(n) = g(n) + h(n)). Por ser admissível em grade ortogonal sem diagonais, encontra o caminho ótimo explorando substancialmente menos vértices que a busca uniforme.
 - **Modo de Inspeção Visual (`G`):** Pressionando a tecla `G` durante a partida, o jogo exibe diretamente sobre o Canvas os vértices transitáveis, as arestas ativas, os nós visitados pelo algoritmo e a rota traçada para cada slime, além de um painel inferior com métricas em tempo real (algoritmo ativo, quantidade de nós expandidos, tempo de execução da busca em milissegundos e passos da rota).
@@ -90,15 +100,9 @@ O jogo estará disponível no navegador em: `http://localhost:5173/`
 
 ## Outros
 
-### Vídeo de Apresentação
+### Link do Vídeo de Apresentação
 
-<p align="center">
-  <a href="https://youtu.be/Dm7IThr2un4" target="_blank">
-    <img src="https://img.youtube.com/vi/Dm7IThr2un4/maxresdefault.jpg" alt="Vídeo de Apresentação - Bandit Boy" width="720" style="aspect-ratio: 16/9; max-width: 100%; border-radius: 8px;" />
-  </a>
-</p>
-
-- [Vídeo de Apresentação no YouTube](https://youtu.be/Dm7IThr2un4)
+- [https://youtu.be/Dm7IThr2un4](https://youtu.be/Dm7IThr2un4)
 
 ### Comandos Adicionais
 
@@ -125,6 +129,7 @@ npm run deploy
 - **Renderização:** HTML5 Canvas 2D (`imageSmoothingEnabled = false`, escala nativa 3x).
 - **Arte:** Pixel Art própria 16×16 ampliada em 3× (células de 48 × 48 px), sem mixels, acompanhada de partículas para poeira, impactos, faíscas de pavio e explosões.
 - **Transição de Níveis:** Rotação dinâmica de paleta cromática harmônica a cada fase.
+- **Algoritmos de Menor Caminho:** Implementação centralizada em [`src/game/pathfinding.ts`](https://github.com/projeto-de-algoritmos-2026/G6_Grafos_PA-26.2/blob/main/src/game/pathfinding.ts) contendo os algoritmos de Dijkstra e A* com cálculo de heurística, nós expandidos e tempo de execução.
 
 ## Créditos
 
